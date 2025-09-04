@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TimeSync - Audio synchronization tool">
+    <title>TimeSync</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #00ff41 0%, #00aa2a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .clock-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clock-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff41, transparent);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .time-main {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            color: #00ff41;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+        }
+
+        .time-millis {
+            font-size: 2rem;
+            color: rgba(0, 255, 65, 0.6);
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timezone-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 0.5rem;
+            letter-spacing: 0.2em;
+        }
+
+        .sync-button {
+            width: 100%;
+            padding: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff3838 0%, #ff5555 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 0 4px 20px rgba(255, 56, 56, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .sync-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .sync-button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .sync-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(255, 56, 56, 0.4);
+        }
+
+        .sync-button:active {
+            transform: translateY(0);
+        }
+
+        .options-panel {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .smpte-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .fps-option {
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .fps-option:hover {
+            border-color: rgba(0, 255, 65, 0.5);
+        }
+
+        .fps-option.active {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .log-area {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid #00ff41;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+
+        .log-entry strong {
+            color: #00ff41;
+        }
+
+        .status-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 136, 255, 0.95);
+            color: white;
+            padding: 2rem 3rem;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: none;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 136, 255, 0.5);
+        }
+
+        .help-text {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 255, 65, 0.05);
+            border-left: 3px solid rgba(0, 255, 65, 0.3);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .time-main {
+                font-size: 2rem;
+            }
+            
+            .time-millis {
+                font-size: 1.5rem;
+            }
+            
+            .sync-button {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        .flash {
+            animation: flashWhite 0.3s;
+        }
+
+        @keyframes flashWhite {
+            0% { background: white !important; }
+            100% { background: inherit; }
+        }
+
+        /* Scrollbar styling */
+        .log-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .log-area::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .log-area::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 65, 0.3);
+            border-radius: 4px;
+        }
+
+        .log-area::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 65, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="status-overlay" id="statusOverlay">Waiting for top of second...</div>
+
+    <div class="container">
+        <h1>TIMESYNC</h1>
+        
+        <div class="clock-display">
+            <div class="time-main" id="timeMain">00:00:00</div>
+            <div class="time-millis">.<span id="timeMillis">00</span></div>
+            <div class="timezone-label">UTC / GMT</div>
+        </div>
+
+        <button class="sync-button" id="syncButton" type="button">
+            TIME SYNC
+        </button>
+
+        <div class="options-panel">
+            <label for="voiceSelect">Speech Voice:</label>
+            <select id="voiceSelect">
+                <option value="">System Default</option>
+            </select>
+
+            <div style="color: #aaa; font-size: 0.9rem; margin-bottom: 0.5rem;">SMPTE Frame Rate:</div>
+            <div class="smpte-selector">
+                <div class="fps-option active" data-fps="30">30 fps</div>
+                <div class="fps-option" data-fps="29.97">29.97 fps (DF)</div>
+                <div class="fps-option" data-fps="25">25 fps (PAL)</div>
+                <div class="fps-option" data-fps="24">24 fps (Film)</div>
+            </div>
+        </div>
+
+        <div class="help-text">
+            📢 Press TIME SYNC → Sharp TICK at top of second → "Time Sync at the Tick was UTC..."<br>
+            🔍 Transcript markers: "TICK" and "Time Sync at the Tick was"
+        </div>
+
+        <div class="log-area" id="logArea">
+            <div class="log-entry">
+                <strong>READY</strong> - Press TIME SYNC to mark precise second boundary with audio tick
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let audioContext = null;
+        let currentFPS = 30;
+        let isDropFrame = false;
+        const synth = window.speechSynthesis;
+        let voices = [];
+
+        // Initialize audio context
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        // Load voices
+        function loadVoices() {
+            voices = synth.getVoices();
+            const voiceSelect = document.getElementById('voiceSelect');
+            voiceSelect.innerHTML = '<option value="">System Default</option>';
+            
+            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+            englishVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.name;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        // Initialize voices when available
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        // Create sharp tick sound
+        function createSharpTick() {
+            const ctx = initAudio();
+            const now = ctx.currentTime;
+            
+            // White noise burst for sharp transient
+            const bufferSize = ctx.sampleRate * 0.005; // 5ms
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() - 0.5) * 2 * Math.exp(-i / bufferSize * 10);
+            }
+            
+            const noiseSource = ctx.createBufferSource();
+            noiseSource.buffer = buffer;
+            
+            // High frequency click for sharpness
+            const osc = ctx.createOscillator();
+            osc.frequency.value = 4000;
+            osc.type = 'square';
+            
+            // Sharp envelope
+            const gainNode = ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(1, now + 0.001); // 1ms attack
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.01); // 9ms decay
+            
+            noiseSource.connect(gainNode);
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            noiseSource.start(now);
+            osc.start(now);
+            noiseSource.stop(now + 0.005);
+            osc.stop(now + 0.01);
+        }
+
+        // Convert to SMPTE timecode
+        function toSMPTE(date, fps, dropFrame = false) {
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+            const ms = date.getUTCMilliseconds();
+            
+            let frames = Math.floor((ms / 1000) * fps);
+            
+            if (dropFrame && fps === 29.97) {
+                const totalSeconds = date.getUTCHours() * 3600 + date.getUTCMinutes() * 60 + date.getUTCSeconds();
+                const totalFrames = totalSeconds * 30 + frames;
+                const droppedFrames = Math.floor(totalSeconds / 60) * 2 - Math.floor(totalSeconds / 600) * 2;
+                frames = (totalFrames - droppedFrames) % 30;
+            }
+            
+            return `${hours}:${minutes}:${seconds}:${frames.toString().padStart(2, '0')}`;
+        }
+
+        // Convert number to word
+        function numberToWord(num) {
+            const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+                          'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 
+                          'seventeen', 'eighteen', 'nineteen', 'twenty', 'twenty-one', 'twenty-two',
+                          'twenty-three', 'twenty-four', 'twenty-five', 'twenty-six', 'twenty-seven',
+                          'twenty-eight', 'twenty-nine', 'thirty', 'thirty-one'];
+            return words[num] || num.toString();
+        }
+
+        // Format time for speech
+        function formatTimeForSpeech(date) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const year = date.getUTCFullYear();
+            const month = months[date.getUTCMonth()];
+            const day = numberToWord(date.getUTCDate());
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = date.getUTCSeconds();
+            
+            // Format: "UTC 2025 September Four at seventeen twenty-three and twelve seconds"
+            return `UTC ${year} ${month} ${day} at ${hours} ${minutes} and ${seconds} second${seconds !== 1 ? 's' : ''}`;
+        }
+
+        // Update clock display
+        function updateClock() {
+            const now = new Date();
+            
+            const hours = now.getUTCHours().toString().padStart(2, '0');
+            const minutes = now.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = now.getUTCSeconds().toString().padStart(2, '0');
+            const milliseconds = now.getUTCMilliseconds();
+            const centiseconds = Math.floor(milliseconds / 10).toString().padStart(2, '0');
+            
+            document.getElementById('timeMain').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('timeMillis').textContent = centiseconds;
+            
+            requestAnimationFrame(updateClock);
+        }
+
+        // Add log entry
+        function addLog(type, message, time = new Date()) {
+            const logArea = document.getElementById('logArea');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const isoTime = time.toISOString();
+            const displayTime = isoTime.split('T')[1].replace('Z', '');
+            const smpteTime = toSMPTE(time, currentFPS, isDropFrame);
+            
+            // Show milliseconds for TIME-SYNC entries
+            const ms = time.getMilliseconds().toString().padStart(3, '0');
+            const preciseTime = type === 'TIME-SYNC' ? `${displayTime.slice(0, -4)}.${ms}` : displayTime;
+            
+            entry.innerHTML = `<strong>${type}</strong> ${preciseTime} UTC | SMPTE: ${smpteTime}<br>${message}`;
+            
+            logArea.insertBefore(entry, logArea.firstChild);
+            
+            // Keep only last 20 entries
+            while (logArea.children.length > 20) {
+                logArea.removeChild(logArea.lastChild);
+            }
+            
+            console.log(`TimeSync ${type}:`, {
+                iso: isoTime,
+                smpte: smpteTime,
+                message: message,
+                fps: currentFPS,
+                milliseconds: ms
+            });
+        }
+
+        // Handle time sync
+        function handleTimeSync() {
+            const voiceSelect = document.getElementById('voiceSelect').value;
+            const statusDiv = document.getElementById('statusOverlay');
+            const button = document.getElementById('syncButton');
+            
+            // Calculate time to next whole second
+            const now = new Date();
+            const msToNextSecond = 1000 - now.getMilliseconds();
+            
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Waiting for top of second...';
+            
+            // Wait for the top of the next second
+            setTimeout(() => {
+                const tickTime = new Date();
+                
+                // 1. EMIT THE SHARP TICK - This is the sync point!
+                createSharpTick();
+                
+                // 2. Visual feedback
+                button.classList.add('flash');
+                setTimeout(() => button.classList.remove('flash'), 300);
+                statusDiv.textContent = 'TICK!';
+                
+                // 3. After a brief pause, speak the time announcement
+                setTimeout(() => {
+                    const timeText = formatTimeForSpeech(tickTime);
+                    const announcement = `Time Sync at the Tick was ${timeText}`;
+                    
+                    const utterance = new SpeechSynthesisUtterance(announcement);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;
+                    
+                    if (voiceSelect) {
+                        const selectedVoice = voices.find(v => v.name === voiceSelect);
+                        if (selectedVoice) utterance.voice = selectedVoice;
+                    }
+                    
+                    synth.speak(utterance);
+                    statusDiv.style.display = 'none';
+                    
+                    // Log the event
+                    const shortTime = tickTime.toISOString().split('T')[1].slice(0, 8);
+                    addLog('TIME-SYNC', `Sharp TICK at ${shortTime} → Spoken: "${announcement}"`, tickTime);
+                }, 200); // Small delay to separate TICK from announcement
+                
+            }, msToNextSecond);
+        }
+
+        // Handle frame rate selection
+        document.querySelectorAll('.fps-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.fps-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                currentFPS = parseFloat(this.dataset.fps);
+                isDropFrame = currentFPS === 29.97;
+                addLog('CONFIG', `Frame rate changed to ${this.textContent}`);
+            });
+        });
+
+        // Event listeners
+        document.getElementById('syncButton').addEventListener('click', handleTimeSync);
+
+        // Initialize audio on first interaction
+        document.body.addEventListener('click', initAudio, { once: true });
+
+        // Start clock
+        updateClock();
+
+        // Log initialization
+        console.log('TimeSync initialized', {
+            version: '1.0.0',
+            audioSupport: !!(window.AudioContext || window.webkitAudioContext),
+            speechSupport: !!window.speechSynthesis,
+            timestamp: new Date().toISOString()
+        });
+    </script>
+</body>
+</html>
