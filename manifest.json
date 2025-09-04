@@ -1,0 +1,11 @@
+{
+  "name": "TimeSync",
+  "short_name": "TimeSync",
+  "description": "Audio Visual synchronization tool for recordings and conferences",
+  "version": "0.5.0",
+  "start_url": "https://timesync.app",
+  "display": "standalone",
+  "background_color": "#000033",
+  "theme_color": "#000033",
+  "orientation": "portrait-primary"
+}
