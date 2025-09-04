@@ -148,6 +148,41 @@
             border-radius: 3px;
             word-break: break-all;
             color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .copy-button:hover {
+            background: rgba(0, 100, 255, 0.3);
+            border-color: rgba(0, 100, 255, 0.5);
+        }
+
+        .copy-button:active {
+            transform: scale(0.95);
+        }
+
+        .copy-button.copied {
+            background: rgba(0, 255, 65, 0.3);
+            border-color: rgba(0, 255, 65, 0.5);
+        }
+
+        .time-uri {
+            font-family: 'Courier New', monospace;
+            flex: 1;
         }
 
         /* Help dialog styles */
@@ -496,14 +531,19 @@
             osc.stop(now + 0.01);
         }
 
-        // Convert to SMPTE timecode (fixed at 30fps non-drop)
-        function toSMPTE(date) {
-            const hours = date.getUTCHours().toString().padStart(2, '0');
-            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-            const seconds = date.getUTCSeconds().toString().padStart(2, '0');
-            const ms = date.getUTCMilliseconds();
-            const frames = Math.floor((ms / 1000) * 30);
-            return `${hours}:${minutes}:${seconds}:${frames.toString().padStart(2, '0')}`;
+        // Copy to clipboard with visual feedback
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                button.classList.add('copied');
+                const originalText = button.textContent;
+                button.textContent = '✓';
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    button.textContent = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
         }
 
         // Convert number to word
@@ -553,9 +593,24 @@
             entry.className = 'log-entry';
             
             const isoTime = time.toISOString();
-            const smpteTime = toSMPTE(time);
+            const timeUri = `time:${isoTime}`;
             
-            entry.innerHTML = `${isoTime} | SMPTE: ${smpteTime}`;
+            // Create copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-button';
+            copyBtn.textContent = '⧉';
+            copyBtn.title = 'Copy time URI';
+            copyBtn.addEventListener('click', () => {
+                copyToClipboard(timeUri, copyBtn);
+            });
+            
+            // Create time URI span
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'time-uri';
+            timeSpan.textContent = timeUri;
+            
+            entry.appendChild(copyBtn);
+            entry.appendChild(timeSpan);
             
             logArea.insertBefore(entry, logArea.firstChild);
             
@@ -566,7 +621,7 @@
             
             console.log('TimeSync:', {
                 iso: isoTime,
-                smpte: smpteTime,
+                uri: timeUri,
                 milliseconds: time.getMilliseconds()
             });
         }
