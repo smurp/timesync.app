@@ -47,30 +47,22 @@
             box-sizing: border-box;
         }
 
-        /* Corner button styles */
-        .corner-button {
+        /* Corner SVG styles */
+        .corner-svg {
             position: absolute;
             width: 70px;
             height: 70px;
-            background: rgba(0, 0, 51, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            color: #FFFFFF;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
             z-index: 100;
             transition: all 0.3s ease;
             cursor: pointer;
         }
 
-        .corner-button:hover {
+        .corner-svg:hover {
             transform: scale(1.1);
-            background: rgba(0, 100, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .corner-svg:hover path {
+            fill: #0064ff;
         }
 
         .top-left {
@@ -262,10 +254,9 @@
                 font-size: 1.8rem;
             }
 
-            .corner-button {
+            .corner-svg {
                 width: 60px;
                 height: 60px;
-                font-size: 12px;
             }
         }
 
@@ -275,10 +266,9 @@
                 border-width: 2px;
             }
 
-            .corner-button {
+            .corner-svg {
                 width: 50px;
                 height: 50px;
-                font-size: 11px;
             }
 
             .top-left, .top-right {
@@ -302,21 +292,118 @@
 </head>
 <body>
     <div class="container">
-        <!-- Corner buttons matching GoZulu layout -->
-        <a href="https://noosphere.org/blog/timesync/" class="corner-button top-left" target="_blank" rel="noopener noreferrer">
-            Why?
+        <!-- Corner SVG buttons -->
+        <a href="https://noosphere.org/blog/timesync/" class="corner-svg top-left" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+              <!-- Right-angled triangle with rounded corners -->
+              <path d="M 10,0 
+                       L 90,0 
+                       A 10,10 0 0 1 100,10 
+                       L 10,100 
+                       A 10,10 0 0 1 0,90 
+                       L 0,10 
+                       A 10,10 0 0 1 10,0 
+                       Z" 
+                    fill="#5D4037" />
+              
+              <!-- Text "Why?" rotated to align with hypotenuse -->
+              <text x="50" y="45"
+                    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    font-size="20" 
+                    font-weight="bold" 
+                    fill="#FFFFFF" 
+                    text-anchor="middle"
+                    transform="rotate(-45, 50, 45)">
+                Why?
+              </text>
+            </svg>
         </a>
         
-        <button class="corner-button top-right" id="helpButton">
-            Help!
-        </button>
+        <div class="corner-svg top-right" id="helpButton">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+              <!-- Basic right-angled triangle - rotated 90 degrees clockwise -->
+              <g transform="rotate(90, 50, 50)">
+                <!-- Triangle with rounded corners -->
+                <path d="M 10,0 
+                         L 90,0 
+                         A 10,10 0 0 1 100,10 
+                         L 10,100 
+                         A 10,10 0 0 1 0,90 
+                         L 0,10 
+                         A 10,10 0 0 1 10,0 
+                         Z" 
+                      fill="#5D4037" />
+                
+                <!-- Text "Help?" -->
+                <text x="50" y="45"
+                      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                      font-size="20" 
+                      font-weight="bold" 
+                      fill="#FFFFFF" 
+                      text-anchor="middle"
+                      transform="rotate(-45, 50, 45)">
+                  Help!
+                </text>
+              </g>
+            </svg>
+        </div>
         
-        <a href="https://noosphere.org/blog/fund/" class="corner-button bottom-left" target="_blank" rel="noopener noreferrer">
-            Fund
+        <a href="https://noosphere.org/blog/fund/" class="corner-svg bottom-left" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+              <!-- Basic right-angled triangle - rotated 270 degrees (or -90 degrees) to have right angle at bottom left -->
+              <g transform="rotate(270, 50, 50)">
+                <!-- Triangle with rounded corners -->
+                <path d="M 10,0 
+                         L 90,0 
+                         A 10,10 0 0 1 100,10 
+                         L 10,100 
+                         A 10,10 0 0 1 0,90 
+                         L 0,10 
+                         A 10,10 0 0 1 10,0 
+                         Z" 
+                      fill="#5D4037" />
+                
+                <!-- Text "Fund❤️" positioned further to the left -->
+                <text x="15" y="50"
+                      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                      font-size="20" 
+                      font-weight="bold" 
+                      fill="#FFFFFF" 
+                      text-anchor="middle"
+                      transform="rotate(135, 25, 50)">
+                  Fund❤️
+                </text>
+              </g>
+            </svg>
         </a>
         
-        <a href="https://github.com/smurp/timesync.app/issues" class="corner-button bottom-right" target="_blank" rel="noopener noreferrer">
-            Next?
+        <a href="https://github.com/smurp/timesync.app/issues" class="corner-svg bottom-right" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+              <!-- Basic right-angled triangle - rotated 180 degrees (90 degrees clockwise from fund button) -->
+              <g transform="rotate(180, 50, 50)">
+                <!-- Triangle with rounded corners -->
+                <path d="M 10,0 
+                         L 90,0 
+                         A 10,10 0 0 1 100,10 
+                         L 10,100 
+                         A 10,10 0 0 1 0,90 
+                         L 0,10 
+                         A 10,10 0 0 1 10,0 
+                         Z" 
+                      fill="#5D4037" />
+                
+                <!-- Text "Next?" positioned further to the left -->
+                <text x="10" y="50"
+                      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                      font-size="20" 
+                      font-weight="bold" 
+                      fill="#FFFFFF" 
+                      text-anchor="middle"
+                      transform="rotate(135, 25, 50)">
+                  Next?
+                </text>
+              </g>
+            </svg>
         </a>
 
         <!-- TIME SYNC button at top -->
