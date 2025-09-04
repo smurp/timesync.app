@@ -154,28 +154,7 @@
             border-left: 3px solid #00ff41;
             border-radius: 3px;
             word-break: break-all;
-        }
-
-        .log-entry strong {
-            color: #00ff41;
-        }
-
-        /* Status overlay */
-        .status-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 136, 255, 0.95);
-            color: white;
-            padding: 2rem 3rem;
-            border-radius: 15px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            display: none;
-            z-index: 1000;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0, 136, 255, 0.5);
+            color: #ffffff;
         }
 
         /* Help dialog styles */
@@ -321,8 +300,6 @@
     </style>
 </head>
 <body>
-    <div class="status-overlay" id="statusOverlay">Waiting for top of second...</div>
-
     <div class="container">
         <!-- Corner buttons matching GoZulu layout -->
         <a href="https://noosphere.org/blog/timesync/" class="corner-button top-left" target="_blank" rel="noopener noreferrer">
@@ -490,7 +467,7 @@
             const isoTime = time.toISOString();
             const smpteTime = toSMPTE(time);
             
-            entry.innerHTML = `<strong>TIME-SYNC</strong> ${isoTime} | SMPTE: ${smpteTime}`;
+            entry.innerHTML = `${isoTime} | SMPTE: ${smpteTime}`;
             
             logArea.insertBefore(entry, logArea.firstChild);
             
@@ -506,17 +483,13 @@
             });
         }
 
-        // Handle time sync
+        // Handle time sync - NO STATUS OVERLAY REFERENCES
         function handleTimeSync() {
-            const statusDiv = document.getElementById('statusOverlay');
             const button = document.getElementById('syncButton');
             
             // Calculate time to next whole second
             const now = new Date();
             const msToNextSecond = 1000 - now.getMilliseconds();
-            
-            statusDiv.style.display = 'block';
-            statusDiv.textContent = 'Waiting for top of second...';
             
             // Wait for the top of the next second
             setTimeout(() => {
@@ -528,7 +501,6 @@
                 // 2. Visual feedback
                 button.classList.add('flash');
                 setTimeout(() => button.classList.remove('flash'), 300);
-                statusDiv.textContent = 'TICK!';
                 
                 // 3. After a brief pause, speak the time announcement
                 setTimeout(() => {
@@ -541,7 +513,6 @@
                     utterance.volume = 1.0;
                     
                     synth.speak(utterance);
-                    statusDiv.style.display = 'none';
                     
                     // Log the sync event
                     addLog(tickTime);
