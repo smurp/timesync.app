@@ -164,35 +164,6 @@
             border-radius: 5px;
             font-size: 0.9rem;
             cursor: pointer;
-            margin-bottom: 1rem;
-        }
-
-        .smpte-selector {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .fps-option {
-            padding: 0.5rem;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .fps-option:hover {
-            border-color: rgba(0, 255, 65, 0.5);
-        }
-
-        .fps-option.active {
-            background: rgba(0, 255, 65, 0.1);
-            border-color: #00ff41;
-            color: #00ff41;
         }
 
         .log-area {
@@ -234,17 +205,6 @@
             z-index: 1000;
             text-align: center;
             box-shadow: 0 10px 40px rgba(0, 136, 255, 0.5);
-        }
-
-        .help-text {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(0, 255, 65, 0.05);
-            border-left: 3px solid rgba(0, 255, 65, 0.3);
-            border-radius: 5px;
-            font-size: 0.85rem;
-            color: #aaa;
-            line-height: 1.5;
         }
 
         @media (max-width: 640px) {
@@ -304,7 +264,7 @@
         <div class="clock-display">
             <div class="time-main" id="timeMain">00:00:00</div>
             <div class="time-millis">.<span id="timeMillis">00</span></div>
-            <div class="timezone-label">UTC / GMT</div>
+            <div class="timezone-label">UTC / GMT / Z</div>
         </div>
 
         <button class="sync-button" id="syncButton" type="button">
@@ -316,33 +276,14 @@
             <select id="voiceSelect">
                 <option value="">System Default</option>
             </select>
-
-            <div style="color: #aaa; font-size: 0.9rem; margin-bottom: 0.5rem;">SMPTE Frame Rate:</div>
-            <div class="smpte-selector">
-                <div class="fps-option active" data-fps="30">30 fps</div>
-                <div class="fps-option" data-fps="29.97">29.97 fps (DF)</div>
-                <div class="fps-option" data-fps="25">25 fps (PAL)</div>
-                <div class="fps-option" data-fps="24">24 fps (Film)</div>
-            </div>
         </div>
 
-        <div class="help-text">
-            📢 Press TIME SYNC → Sharp TICK at top of second → "Time Sync at the Tick was UTC..."<br>
-            🔍 Transcript markers: "TICK" and "Time Sync at the Tick was"
-        </div>
-
-        <div class="log-area" id="logArea">
-            <div class="log-entry">
-                <strong>READY</strong> - Press TIME SYNC to mark precise second boundary with audio tick
-            </div>
-        </div>
+        <div class="log-area" id="logArea"></div>
     </div>
 
     <script>
         // Global state
         let audioContext = null;
-        let currentFPS = 30;
-        let isDropFrame = false;
         const synth = window.speechSynthesis;
         let voices = [];
 
@@ -413,22 +354,13 @@
             osc.stop(now + 0.01);
         }
 
-        // Convert to SMPTE timecode
-        function toSMPTE(date, fps, dropFrame = false) {
+        // Convert to SMPTE timecode (fixed at 30fps non-drop)
+        function toSMPTE(date) {
             const hours = date.getUTCHours().toString().padStart(2, '0');
             const minutes = date.getUTCMinutes().toString().padStart(2, '0');
             const seconds = date.getUTCSeconds().toString().padStart(2, '0');
             const ms = date.getUTCMilliseconds();
-            
-            let frames = Math.floor((ms / 1000) * fps);
-            
-            if (dropFrame && fps === 29.97) {
-                const totalSeconds = date.getUTCHours() * 3600 + date.getUTCMinutes() * 60 + date.getUTCSeconds();
-                const totalFrames = totalSeconds * 30 + frames;
-                const droppedFrames = Math.floor(totalSeconds / 60) * 2 - Math.floor(totalSeconds / 600) * 2;
-                frames = (totalFrames - droppedFrames) % 30;
-            }
-            
+            const frames = Math.floor((ms / 1000) * 30);
             return `${hours}:${minutes}:${seconds}:${frames.toString().padStart(2, '0')}`;
         }
 
@@ -474,21 +406,16 @@
             requestAnimationFrame(updateClock);
         }
 
-        // Add log entry
-        function addLog(type, message, time = new Date()) {
+        // Add log entry (simplified for TIME-SYNC only)
+        function addLog(time) {
             const logArea = document.getElementById('logArea');
             const entry = document.createElement('div');
             entry.className = 'log-entry';
             
             const isoTime = time.toISOString();
-            const displayTime = isoTime.split('T')[1].replace('Z', '');
-            const smpteTime = toSMPTE(time, currentFPS, isDropFrame);
+            const smpteTime = toSMPTE(time);
             
-            // Show milliseconds for TIME-SYNC entries
-            const ms = time.getMilliseconds().toString().padStart(3, '0');
-            const preciseTime = type === 'TIME-SYNC' ? `${displayTime.slice(0, -4)}.${ms}` : displayTime;
-            
-            entry.innerHTML = `<strong>${type}</strong> ${preciseTime} UTC | SMPTE: ${smpteTime}<br>${message}`;
+            entry.innerHTML = `<strong>TIME-SYNC</strong> ${isoTime} | SMPTE: ${smpteTime}`;
             
             logArea.insertBefore(entry, logArea.firstChild);
             
@@ -497,12 +424,10 @@
                 logArea.removeChild(logArea.lastChild);
             }
             
-            console.log(`TimeSync ${type}:`, {
+            console.log('TimeSync:', {
                 iso: isoTime,
                 smpte: smpteTime,
-                message: message,
-                fps: currentFPS,
-                milliseconds: ms
+                milliseconds: time.getMilliseconds()
             });
         }
 
@@ -549,24 +474,15 @@
                     synth.speak(utterance);
                     statusDiv.style.display = 'none';
                     
-                    // Log the event
-                    const shortTime = tickTime.toISOString().split('T')[1].slice(0, 8);
-                    addLog('TIME-SYNC', `Sharp TICK at ${shortTime} → Spoken: "${announcement}"`, tickTime);
+                    // Log the sync event
+                    addLog(tickTime);
+                    
+                    // Also log the spoken announcement for debugging
+                    console.log('Announcement spoken:', announcement);
                 }, 200); // Small delay to separate TICK from announcement
                 
             }, msToNextSecond);
         }
-
-        // Handle frame rate selection
-        document.querySelectorAll('.fps-option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.fps-option').forEach(o => o.classList.remove('active'));
-                this.classList.add('active');
-                currentFPS = parseFloat(this.dataset.fps);
-                isDropFrame = currentFPS === 29.97;
-                addLog('CONFIG', `Frame rate changed to ${this.textContent}`);
-            });
-        });
 
         // Event listeners
         document.getElementById('syncButton').addEventListener('click', handleTimeSync);
