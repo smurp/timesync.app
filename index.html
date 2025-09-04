@@ -529,7 +529,7 @@
             const seconds = date.getUTCSeconds();
             
             // Format: "UTC 2025 September Four at seventeen twenty-three and twelve seconds"
-            return `UTC ${year} ${month} ${day} at ${hours} ${minutes} and ${seconds} second${seconds !== 1 ? 's' : ''}`;
+            return `U T C ${year} ${month} ${day}, at ${hours} hours ${minutes} minutes and ${seconds} second${seconds !== 1 ? 's' : ''}`;
         }
 
         // Update clock display with milliseconds
@@ -593,7 +593,7 @@
                 // 3. After a brief pause, speak the time announcement
                 setTimeout(() => {
                     const timeText = formatTimeForSpeech(tickTime);
-                    const announcement = `Time Sync at the Tick was ${timeText}`;
+                    const announcement = `Time Sync, at the Tick, was ${timeText}`;
                     
                     const utterance = new SpeechSynthesisUtterance(announcement);
                     utterance.rate = 1.0;
