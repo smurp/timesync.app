@@ -4,100 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="TimeSync - Audio synchronization tool">
+    <meta name="theme-color" content="#000033">
     <title>TimeSync</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000033;
             color: #ffffff;
-            min-height: 100vh;
             display: flex;
-            align-items: center;
             justify-content: center;
-            padding: 1rem;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            margin-bottom: 2rem;
-            background: linear-gradient(135deg, #00ff41 0%, #00aa2a 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .clock-display {
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid rgba(0, 255, 65, 0.3);
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            position: relative;
+            align-items: center;
+            min-height: 100vh;
             overflow: hidden;
         }
 
-        .clock-display::before {
-            content: '';
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            margin: 20px;
+            min-width: 500px;
+            min-height: 500px;
+            width: calc(100vh - 40px);
+            height: calc(100vh - 40px);
+            max-width: 90vw;
+            max-height: 90vh;
+            box-sizing: border-box;
+        }
+
+        /* Corner button styles */
+        .corner-button {
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ff41, transparent);
-            animation: scan 3s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .time-main {
-            font-size: 3rem;
+            width: 70px;
+            height: 70px;
+            background: rgba(0, 0, 51, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: #FFFFFF;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
             font-weight: bold;
-            letter-spacing: 0.05em;
-            color: #00ff41;
-            font-variant-numeric: tabular-nums;
-            font-family: 'Courier New', monospace;
+            z-index: 100;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .time-millis {
-            font-size: 2rem;
-            color: rgba(0, 255, 65, 0.6);
-            font-variant-numeric: tabular-nums;
-            font-family: 'Courier New', monospace;
+        .corner-button:hover {
+            transform: scale(1.1);
+            background: rgba(0, 100, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
         }
 
-        .timezone-label {
-            font-size: 0.9rem;
-            color: #888;
-            margin-top: 0.5rem;
-            letter-spacing: 0.2em;
+        .top-left {
+            top: -15px;
+            left: -15px;
         }
 
+        .top-right {
+            top: -15px;
+            right: -15px;
+        }
+
+        .bottom-left {
+            bottom: -15px;
+            left: -15px;
+        }
+
+        .bottom-right {
+            bottom: -15px;
+            right: -15px;
+        }
+
+        /* TIME SYNC button at top */
         .sync-button {
-            width: 100%;
-            padding: 1.5rem;
-            font-size: 1.2rem;
+            padding: 1rem 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             background: linear-gradient(135deg, #ff3838 0%, #ff5555 100%);
             color: white;
@@ -108,27 +107,7 @@
             letter-spacing: 0.1em;
             box-shadow: 0 4px 20px rgba(255, 56, 56, 0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 1.5rem;
-        }
-
-        .sync-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .sync-button:active::before {
-            width: 300px;
-            height: 300px;
+            margin-bottom: 20px;
         }
 
         .sync-button:hover {
@@ -140,41 +119,32 @@
             transform: translateY(0);
         }
 
-        .options-panel {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
+        /* Clock display with milliseconds */
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
+            color: #FFFFFF;
+            letter-spacing: 0.02em;
+            font-variant-numeric: tabular-nums;
         }
 
-        label {
-            display: block;
-            color: #aaa;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        select {
-            width: 100%;
-            padding: 0.5rem;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
+        /* Log area */
         .log-area {
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 1rem;
-            max-height: 250px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 300px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
             font-size: 0.85rem;
+            margin-top: 20px;
         }
 
         .log-entry {
@@ -190,6 +160,7 @@
             color: #00ff41;
         }
 
+        /* Status overlay */
         .status-overlay {
             position: fixed;
             top: 50%;
@@ -207,23 +178,61 @@
             box-shadow: 0 10px 40px rgba(0, 136, 255, 0.5);
         }
 
-        @media (max-width: 640px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .time-main {
-                font-size: 2rem;
-            }
-            
-            .time-millis {
-                font-size: 1.5rem;
-            }
-            
-            .sync-button {
-                padding: 1rem;
-                font-size: 1rem;
-            }
+        /* Help dialog styles */
+        .help-dialog {
+            max-width: 500px;
+            width: 80vw;
+            background-color: #000044;
+            color: #FFFFFF;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0;
+            border-radius: 10px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+        }
+
+        .help-dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .dialog-content {
+            padding: 20px;
+        }
+
+        .dialog-content p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .close-button {
+            background-color: #5D4037;
+            color: #FFFFFF;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .close-button:hover {
+            background-color: #8D6E63;
+        }
+
+        #version-display {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Courier New', monospace;
+            text-align: center;
         }
 
         .flash {
@@ -253,33 +262,111 @@
         .log-area::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 255, 65, 0.5);
         }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                min-width: 90vw;
+                min-height: auto;
+                width: auto;
+                height: auto;
+                padding: 15px;
+            }
+
+            .sync-button {
+                font-size: 1.2rem;
+                padding: 0.8rem 1.5rem;
+            }
+
+            .time-display {
+                font-size: 1.8rem;
+            }
+
+            .corner-button {
+                width: 60px;
+                height: 60px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .container {
+                margin: 10px;
+                border-width: 2px;
+            }
+
+            .corner-button {
+                width: 50px;
+                height: 50px;
+                font-size: 11px;
+            }
+
+            .top-left, .top-right {
+                top: -10px;
+            }
+
+            .bottom-left, .bottom-right {
+                bottom: -10px;
+            }
+
+            .sync-button {
+                font-size: 1rem;
+                padding: 0.6rem 1.2rem;
+            }
+
+            .time-display {
+                font-size: 1.3rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="status-overlay" id="statusOverlay">Waiting for top of second...</div>
 
     <div class="container">
-        <h1>TIMESYNC</h1>
+        <!-- Corner buttons matching GoZulu layout -->
+        <a href="https://noosphere.org/blog/timesync/" class="corner-button top-left" target="_blank" rel="noopener noreferrer">
+            Why?
+        </a>
         
-        <div class="clock-display">
-            <div class="time-main" id="timeMain">00:00:00</div>
-            <div class="time-millis">.<span id="timeMillis">00</span></div>
-            <div class="timezone-label">UTC / GMT / Z</div>
-        </div>
+        <button class="corner-button top-right" id="helpButton">
+            Help!
+        </button>
+        
+        <a href="https://noosphere.org/blog/fund/" class="corner-button bottom-left" target="_blank" rel="noopener noreferrer">
+            Fund
+        </a>
+        
+        <a href="https://github.com/smurp/timesync.app/issues" class="corner-button bottom-right" target="_blank" rel="noopener noreferrer">
+            Next?
+        </a>
 
+        <!-- TIME SYNC button at top -->
         <button class="sync-button" id="syncButton" type="button">
             TIME SYNC
         </button>
+        
+        <!-- Clock display with milliseconds -->
+        <div id="zulu-time" class="time-display">00:00:00.000Z</div>
 
-        <div class="options-panel">
-            <label for="voiceSelect">Speech Voice:</label>
-            <select id="voiceSelect">
-                <option value="">System Default</option>
-            </select>
-        </div>
-
+        <!-- Log area -->
         <div class="log-area" id="logArea"></div>
+
+        <!-- Version display -->
+        <div id="version-display">version</div>
     </div>
+
+    <!-- Help dialog -->
+    <dialog id="helpDialog" class="help-dialog">
+        <div class="dialog-content">
+            <p>
+                When you click the <b>TIME SYNC</b> button then a <b>TICK</b> will be sounded and the Universal time of the beginning of the tick will be spoken aloud.
+                <br><br>
+                This is so Time Synchronization announcements can be integrated into conference calls, recordings and other media so later synchronization is possible.
+            </p>
+            <button id="closeDialog" class="close-button">Close</button>
+        </div>
+    </dialog>
 
     <script>
         // Global state
@@ -298,16 +385,6 @@
         // Load voices
         function loadVoices() {
             voices = synth.getVoices();
-            const voiceSelect = document.getElementById('voiceSelect');
-            voiceSelect.innerHTML = '<option value="">System Default</option>';
-            
-            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
-            englishVoices.forEach(voice => {
-                const option = document.createElement('option');
-                option.value = voice.name;
-                option.textContent = `${voice.name} (${voice.lang})`;
-                voiceSelect.appendChild(option);
-            });
         }
 
         // Initialize voices when available
@@ -390,23 +467,21 @@
             return `UTC ${year} ${month} ${day} at ${hours} ${minutes} and ${seconds} second${seconds !== 1 ? 's' : ''}`;
         }
 
-        // Update clock display
+        // Update clock display with milliseconds
         function updateClock() {
             const now = new Date();
             
             const hours = now.getUTCHours().toString().padStart(2, '0');
             const minutes = now.getUTCMinutes().toString().padStart(2, '0');
             const seconds = now.getUTCSeconds().toString().padStart(2, '0');
-            const milliseconds = now.getUTCMilliseconds();
-            const centiseconds = Math.floor(milliseconds / 10).toString().padStart(2, '0');
+            const milliseconds = now.getUTCMilliseconds().toString().padStart(3, '0');
             
-            document.getElementById('timeMain').textContent = `${hours}:${minutes}:${seconds}`;
-            document.getElementById('timeMillis').textContent = centiseconds;
+            document.getElementById('zulu-time').textContent = `${hours}:${minutes}:${seconds}.${milliseconds}Z`;
             
             requestAnimationFrame(updateClock);
         }
 
-        // Add log entry (simplified for TIME-SYNC only)
+        // Add log entry
         function addLog(time) {
             const logArea = document.getElementById('logArea');
             const entry = document.createElement('div');
@@ -433,7 +508,6 @@
 
         // Handle time sync
         function handleTimeSync() {
-            const voiceSelect = document.getElementById('voiceSelect').value;
             const statusDiv = document.getElementById('statusOverlay');
             const button = document.getElementById('syncButton');
             
@@ -466,11 +540,6 @@
                     utterance.pitch = 1.0;
                     utterance.volume = 1.0;
                     
-                    if (voiceSelect) {
-                        const selectedVoice = voices.find(v => v.name === voiceSelect);
-                        if (selectedVoice) utterance.voice = selectedVoice;
-                    }
-                    
                     synth.speak(utterance);
                     statusDiv.style.display = 'none';
                     
@@ -484,6 +553,32 @@
             }, msToNextSecond);
         }
 
+        // Setup dialog functionality
+        const helpButton = document.getElementById('helpButton');
+        const helpDialog = document.getElementById('helpDialog');
+        const closeDialog = document.getElementById('closeDialog');
+        
+        helpButton.addEventListener('click', () => {
+            helpDialog.showModal();
+        });
+        
+        closeDialog.addEventListener('click', () => {
+            helpDialog.close();
+        });
+        
+        // Close dialog if clicking outside of it
+        helpDialog.addEventListener('click', (e) => {
+            const dialogDimensions = helpDialog.getBoundingClientRect();
+            if (
+                e.clientX < dialogDimensions.left ||
+                e.clientX > dialogDimensions.right ||
+                e.clientY < dialogDimensions.top ||
+                e.clientY > dialogDimensions.bottom
+            ) {
+                helpDialog.close();
+            }
+        });
+
         // Event listeners
         document.getElementById('syncButton').addEventListener('click', handleTimeSync);
 
@@ -493,9 +588,21 @@
         // Start clock
         updateClock();
 
+        // Load version from manifest.json
+        fetch('manifest.json')
+            .then(response => response.json())
+            .then(manifest => {
+                if (manifest.version) {
+                    document.getElementById('version-display').textContent = `v${manifest.version}`;
+                }
+            })
+            .catch(err => {
+                console.log('Could not load manifest.json, using default version display');
+                // Keep the default 'version' text if manifest is not available
+            });
+
         // Log initialization
         console.log('TimeSync initialized', {
-            version: '1.0.0',
             audioSupport: !!(window.AudioContext || window.webkitAudioContext),
             speechSupport: !!window.speechSynthesis,
             timestamp: new Date().toISOString()
