@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+  <!-- Background rectangles - each exactly 1/3 width -->
+  <rect x="0" y="1" width="10.67" height="14" fill="white"/>
+  <rect x="10.67" y="1" width="10.66" height="14" fill="black"/>
+  <rect x="21.33" y="1" width="10.67" height="14" fill="red"/>
+  <rect x="0" y="17" width="10.67" height="14" fill="black"/>
+  <rect x="10.67" y="17" width="10.66" height="14" fill="red"/>
+  <rect x="21.33" y="17" width="10.67" height="14" fill="white"/>
+  
+  <!-- Characters positioned to match the centered 'c' -->
+  <text font-size="14.4px"
+        font-family="'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace"
+        font-weight="bold"
+        text-anchor="middle">
+    <tspan x="9" y="12" fill="black">t</tspan>
+    <tspan x="20.75" y="12" fill="red">i</tspan>
+    <tspan x="31" y="12" fill="white">m</tspan>
+    <tspan x="9.8" y="28" fill="red">s</tspan>
+    <tspan x="20.6" y="28" fill="white">n</tspan>
+    <tspan x="26.7" y="28" fill="black">c</tspan>
+  </text>
+</svg>
