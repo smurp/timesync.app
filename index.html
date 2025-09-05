@@ -497,6 +497,8 @@
         let audioContext = null;
         const synth = window.speechSynthesis;
         let voices = [];
+        let pendingSync = null;
+        let pendingSpeech = null;
 
         // Initialize audio context
         function initAudio() {
@@ -661,12 +663,23 @@
         function handleTimeSync() {
             const button = document.getElementById('syncButton');
             
+            // Cancel any currently playing speech and pending timeouts
+            synth.cancel();
+            if (pendingSync) {
+                clearTimeout(pendingSync);
+                pendingSync = null;
+            }
+            if (pendingSpeech) {
+                clearTimeout(pendingSpeech);
+                pendingSpeech = null;
+            }
+            
             // Calculate time to next whole second
             const now = new Date();
             const msToNextSecond = 1000 - now.getMilliseconds();
             
             // Wait for the top of the next second
-            setTimeout(() => {
+            pendingSync = setTimeout(() => {
                 const tickTime = new Date();
                 
                 // 1. EMIT THE SHARP TICK - This is the sync point!
@@ -677,7 +690,7 @@
                 setTimeout(() => button.classList.remove('flash'), 300);
                 
                 // 3. After a brief pause, speak the time announcement
-                setTimeout(() => {
+                pendingSpeech = setTimeout(() => {
                     const timeText = formatTimeForSpeech(tickTime);
                     const announcement = `Time Sync, at the Tick, was ${timeText}`;
                     
@@ -693,8 +706,13 @@
                     
                     // Also log the spoken announcement for debugging
                     console.log('Announcement spoken:', announcement);
+                    
+                    // Clear the speech timeout reference after it's executed
+                    pendingSpeech = null;
                 }, 200); // Small delay to separate TICK from announcement
                 
+                // Clear the sync timeout reference after it's executed
+                pendingSync = null;
             }, msToNextSecond);
         }
 
