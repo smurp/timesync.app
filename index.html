@@ -354,6 +354,11 @@
             color: rgba(255, 255, 255, 0.6);
             font-family: 'Courier New', monospace;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            white-space: nowrap;
         }
 
         .flash {
@@ -423,6 +428,17 @@
                 left: 10px;
                 width: auto;
             }
+
+            #version-display {
+                font-size: 11px;
+                bottom: 5px;
+            }
+            
+            #upgrade-button {
+                font-size: 10px !important;
+                padding: 4px 8px !important;
+                margin-left: 10px !important;
+            }
         }
 
         @media (max-width: 550px) {
@@ -461,6 +477,16 @@
 
             .time-display {
                 font-size: 1.3rem;
+            }
+
+            #version-display {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            #upgrade-button {
+                margin-left: 0 !important;
+                margin-top: 5px;
             }
         }
 
@@ -640,6 +666,8 @@
         let pendingSync = null;
         let pendingSpeech = null;
         let deferredPrompt = null;
+        let refreshing = false;
+        let newVersionAvailable = null;
 
         // PWA Installation handling
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -687,17 +715,301 @@
             hideInstallPrompt();
         });
 
-        // Service Worker Registration
+        // ============================================
+        // STATE-PRESERVING SERVICE WORKER UPDATE HANDLER
+        // ============================================
         if ('serviceWorker' in navigator) {
+            let updateCheckTimer = null;
+            let lastUpdateCheck = 0;
+            let checkInterval = 3600000; // Start with 1 hour
+            const MIN_CHECK_INTERVAL = 3600000; // 1 hour minimum
+            const MAX_CHECK_INTERVAL = 86400000; // 24 hours maximum
+            
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then((registration) => {
                         console.log('ServiceWorker registration successful:', registration.scope);
+                        
+                        // Function to check for updates
+                        const checkForUpdates = () => {
+                            const now = Date.now();
+                            
+                            // Prevent checking too frequently
+                            if (now - lastUpdateCheck < MIN_CHECK_INTERVAL) {
+                                console.log('Skipping update check - too soon since last check');
+                                return;
+                            }
+                            
+                            // Only check if page is visible
+                            if (!document.hidden) {
+                                console.log('Checking for TimeSync updates...');
+                                lastUpdateCheck = now;
+                                registration.update();
+                            }
+                        };
+                        
+                        // Schedule next check with exponential backoff
+                        const scheduleNextCheck = () => {
+                            if (updateCheckTimer) {
+                                clearTimeout(updateCheckTimer);
+                            }
+                            
+                            updateCheckTimer = setTimeout(() => {
+                                checkForUpdates();
+                                // Increase interval for next check (exponential backoff)
+                                checkInterval = Math.min(checkInterval * 1.5, MAX_CHECK_INTERVAL);
+                                scheduleNextCheck();
+                            }, checkInterval);
+                            
+                            console.log(`Next update check scheduled in ${Math.round(checkInterval / 60000)} minutes`);
+                        };
+                        
+                        // Check for updates on certain user interactions (throttled)
+                        const interactionCheck = (() => {
+                            let lastInteractionCheck = 0;
+                            const INTERACTION_CHECK_COOLDOWN = 600000; // 10 minutes
+                            
+                            return () => {
+                                const now = Date.now();
+                                if (now - lastInteractionCheck > INTERACTION_CHECK_COOLDOWN) {
+                                    lastInteractionCheck = now;
+                                    console.log('User interaction detected - checking for updates');
+                                    checkForUpdates();
+                                }
+                            };
+                        })();
+                        
+                        // Strategy 1: Check on page visibility change (user returns to tab)
+                        document.addEventListener('visibilitychange', () => {
+                            if (!document.hidden) {
+                                const now = Date.now();
+                                // Check if user was away for more than 30 minutes
+                                if (now - lastUpdateCheck > 1800000) {
+                                    console.log('User returned after extended absence - checking for updates');
+                                    checkForUpdates();
+                                    // Reset check interval since user is active
+                                    checkInterval = MIN_CHECK_INTERVAL;
+                                }
+                            }
+                        });
+                        
+                        // Strategy 2: Check on page focus (user switches back to tab/window)
+                        window.addEventListener('focus', () => {
+                            const now = Date.now();
+                            // Check if more than 1 hour since last check
+                            if (now - lastUpdateCheck > 3600000) {
+                                console.log('Window focused - checking for updates');
+                                checkForUpdates();
+                            }
+                        });
+                        
+                        // Strategy 3: Check on important user actions (but not too often)
+                        const syncButton = document.getElementById('syncButton');
+                        const addButton = document.getElementById('addButton');
+                        if (syncButton) syncButton.addEventListener('click', interactionCheck);
+                        if (addButton) addButton.addEventListener('click', interactionCheck);
+                        
+                        // Strategy 4: Check when online after being offline
+                        window.addEventListener('online', () => {
+                            console.log('Connection restored - checking for updates');
+                            setTimeout(checkForUpdates, 2000); // Small delay to ensure connection is stable
+                        });
+                        
+                        // Manual check function for debugging or power users
+                        window.checkForAppUpdate = () => {
+                            console.log('Manual update check requested');
+                            lastUpdateCheck = 0; // Reset to force check
+                            checkForUpdates();
+                            return 'Checking for updates...';
+                        };
+                        
+                        // Initial check after a short delay
+                        setTimeout(() => {
+                            console.log('Initial update check');
+                            checkForUpdates();
+                        }, 5000);
+                        
+                        // Start the periodic check schedule
+                        scheduleNextCheck();
+                        
+                        // Log current version for debugging
+                        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                            const messageChannel = new MessageChannel();
+                            messageChannel.port1.onmessage = (event) => {
+                                if (event.data && event.data.version) {
+                                    console.log('Current Service Worker version:', event.data.version);
+                                }
+                            };
+                            navigator.serviceWorker.controller.postMessage(
+                                { type: 'GET_VERSION' },
+                                [messageChannel.port2]
+                            );
+                        }
+                        
+                        // Handle when update is found
+                        registration.addEventListener('updatefound', () => {
+                            console.log('New TimeSync version found!');
+                            const newWorker = registration.installing;
+                            
+                            // Reset check interval since we found an update
+                            checkInterval = MIN_CHECK_INTERVAL;
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                console.log('New service worker state:', newWorker.state);
+                                
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('New version installed and waiting to activate');
+                                }
+                                
+                                if (newWorker.state === 'activated') {
+                                    console.log('New version activated - update available');
+                                }
+                            });
+                        });
                     })
                     .catch((error) => {
                         console.log('ServiceWorker registration failed:', error);
                     });
             });
+            
+            // Listen for messages from service worker
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'SERVICE_WORKER_UPDATED') {
+                    console.log('Service Worker updated to version:', event.data.version);
+                    newVersionAvailable = event.data.version;
+                    
+                    // Show update button instead of auto-reloading
+                    showUpdateButton(event.data.version);
+                }
+            });
+            
+            // Handle controller change
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    console.log('Service Worker controller changed - update available');
+                    
+                    // If we have the new version number, show the update button
+                    if (newVersionAvailable) {
+                        showUpdateButton(newVersionAvailable);
+                    } else {
+                        // Fallback - show button without version
+                        showUpdateButton(null);
+                    }
+                }
+            });
+        }
+
+        // Show update button next to version display
+        function showUpdateButton(newVersion) {
+            // Check if button already exists
+            if (document.getElementById('upgrade-button')) {
+                return;
+            }
+            
+            // Create upgrade button
+            const upgradeButton = document.createElement('button');
+            upgradeButton.id = 'upgrade-button';
+            
+            // Button text with or without version number
+            if (newVersion) {
+                upgradeButton.innerHTML = `upgrade to v${newVersion}, but lose current state`;
+            } else {
+                upgradeButton.innerHTML = `upgrade available, but lose current state`;
+            }
+            
+            // Style the button
+            upgradeButton.style.cssText = `
+                margin-left: 15px;
+                padding: 5px 12px;
+                background: linear-gradient(135deg, #ff3838 0%, #ff5555 100%);
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-size: 12px;
+                font-family: 'Courier New', monospace;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                animation: pulseGlow 2s infinite;
+            `;
+            
+            // Add pulse animation
+            if (!document.getElementById('upgrade-button-styles')) {
+                const style = document.createElement('style');
+                style.id = 'upgrade-button-styles';
+                style.textContent = `
+                    @keyframes pulseGlow {
+                        0%, 100% { 
+                            box-shadow: 0 0 5px rgba(255, 56, 56, 0.5);
+                            transform: scale(1);
+                        }
+                        50% { 
+                            box-shadow: 0 0 15px rgba(255, 56, 56, 0.8);
+                            transform: scale(1.02);
+                        }
+                    }
+                    #upgrade-button:hover {
+                        animation: none !important;
+                        transform: scale(1.05) !important;
+                        box-shadow: 0 0 20px rgba(255, 56, 56, 0.9) !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Add click handler
+            upgradeButton.addEventListener('click', () => {
+                // Check if there are log entries
+                const logArea = document.getElementById('logArea');
+                const hasLogs = logArea && logArea.children.length > 0;
+                
+                if (hasLogs) {
+                    // Warn user about losing logs
+                    const message = newVersion 
+                        ? `Upgrade to v${newVersion}?\n\nWarning: Your current time sync log will be lost.`
+                        : `Apply update?\n\nWarning: Your current time sync log will be lost.`;
+                    
+                    if (confirm(message)) {
+                        performUpgrade();
+                    }
+                } else {
+                    // No logs to lose, just confirm
+                    const message = newVersion 
+                        ? `Upgrade to v${newVersion}?`
+                        : `Apply update?`;
+                    
+                    if (confirm(message)) {
+                        performUpgrade();
+                    }
+                }
+            });
+            
+            // Insert button next to version display
+            const versionDisplay = document.getElementById('version-display');
+            if (versionDisplay) {
+                versionDisplay.appendChild(upgradeButton);
+            }
+            
+            // Also show a subtle notification that update is available
+            console.log('🎉 Update available! Click the upgrade button when ready.');
+        }
+
+        // Perform the actual upgrade (reload)
+        function performUpgrade() {
+            console.log('Performing upgrade - reloading page');
+            refreshing = true;
+            
+            // Show a brief loading message
+            const upgradeButton = document.getElementById('upgrade-button');
+            if (upgradeButton) {
+                upgradeButton.disabled = true;
+                upgradeButton.innerHTML = 'Upgrading...';
+                upgradeButton.style.animation = 'none';
+            }
+            
+            // Reload after brief delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         }
 
         // Initialize audio context
@@ -1006,6 +1318,11 @@
                 console.log('Could not load manifest.json, using default version display');
                 // Keep the default 'version' text if manifest is not available
             });
+
+        // Log helpful commands for debugging
+        console.log('TimeSync Update Commands:');
+        console.log('  window.checkForAppUpdate() - Force check for updates');
+        console.log('  navigator.serviceWorker.getRegistration().then(r => r.update()) - Direct SW update');
 
         // Log initialization
         console.log('TimeSync PWA initialized', {

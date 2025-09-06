@@ -19,7 +19,7 @@ function print_usage() {
     echo -e "Updates version in:"
     echo -e "  - package.json (via npm version)"
     echo -e "  - manifest.json"
-    echo -e "  - sw.js (cache name)"
+    echo -e "  - sw.js (CACHE_VERSION and cache name)"
     echo -e ""
     echo -e "Examples:"
     echo -e "  $0 patch    # 0.5.7 → 0.5.8"
@@ -102,28 +102,44 @@ function update_manifest_version() {
     fi
 }
 
-function update_service_worker_cache() {
+function update_service_worker() {
     local new_version="$1"
     local sw_file="sw.js"
     
-    echo -e "${BLUE}Updating service worker cache name...${NC}"
+    echo -e "${BLUE}Updating service worker cache version...${NC}"
     
     if [[ ! -f "$sw_file" ]]; then
         echo -e "${RED}Error: $sw_file not found${NC}"
         exit 1
     fi
     
-    # Update the CACHE_NAME in sw.js
+    # Update CACHE_VERSION constant
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS sed
-        sed -i '' "s/const CACHE_NAME = 'timesync-v.*';/const CACHE_NAME = 'timesync-v$new_version';/" "$sw_file"
+        sed -i '' "s/const CACHE_VERSION = '[0-9]*\.[0-9]*\.[0-9]*';/const CACHE_VERSION = '$new_version';/" "$sw_file"
     else
         # Linux sed
-        sed -i "s/const CACHE_NAME = 'timesync-v.*';/const CACHE_NAME = 'timesync-v$new_version';/" "$sw_file"
+        sed -i "s/const CACHE_VERSION = '[0-9]*\.[0-9]*\.[0-9]*';/const CACHE_VERSION = '$new_version';/" "$sw_file"
+    fi
+    
+    # Also update the old-style CACHE_NAME if it exists (for backwards compatibility)
+    if grep -q "const CACHE_NAME = 'timesync-v" "$sw_file"; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/const CACHE_NAME = 'timesync-v.*';/const CACHE_NAME = 'timesync-v$new_version';/" "$sw_file"
+        else
+            sed -i "s/const CACHE_NAME = 'timesync-v.*';/const CACHE_NAME = 'timesync-v$new_version';/" "$sw_file"
+        fi
     fi
     
     if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}✅ Updated $sw_file cache name${NC}"
+        echo -e "${GREEN}✅ Updated $sw_file cache version${NC}"
+        
+        # Verify the update
+        if grep -q "CACHE_VERSION = '$new_version'" "$sw_file"; then
+            echo -e "${GREEN}✅ Verified CACHE_VERSION = '$new_version'${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Please verify CACHE_VERSION was updated correctly${NC}"
+        fi
     else
         echo -e "${RED}❌ Failed to update $sw_file${NC}"
         exit 1
@@ -142,7 +158,7 @@ function show_changes() {
     echo -e "Updated files:"
     echo -e "  📦 package.json"
     echo -e "  📋 manifest.json"
-    echo -e "  🔧 sw.js (cache name)"
+    echo -e "  🔧 sw.js (CACHE_VERSION)"
     echo -e ""
     
     # Show git status if in a git repo
@@ -154,6 +170,7 @@ function show_changes() {
         echo -e "  git add package.json manifest.json sw.js"
         echo -e "  git commit -m \"Release v$new_version\""
         echo -e "  git tag -a v$new_version -m \"Version $new_version\""
+        echo -e "  npm run deploy  # Deploy to production"
     fi
 }
 
@@ -208,7 +225,7 @@ function main() {
     
     # Update other files
     update_manifest_version "$new_version"
-    update_service_worker_cache "$new_version"
+    update_service_worker "$new_version"
     
     # Show summary
     show_changes "$old_version" "$new_version"
@@ -217,6 +234,8 @@ function main() {
     create_git_tag "$new_version"
     
     echo -e "${GREEN}Version update complete! 🎉${NC}"
+    echo -e ""
+    echo -e "Don't forget to deploy: ${YELLOW}npm run deploy${NC}"
 }
 
 # Run main function with all arguments
