@@ -187,8 +187,10 @@ npm run build
 
 ### Development Notes
 - Work on `main` branch - commits don't go live
+- Run `npm run build` during development when icons change
 - Built assets (img/, favicon.ico) are gitignored on `main`
-- Use `npm run deploy` to test production builds locally
+- Deployment scripts expect assets to already exist
+- Use `npm run deploy` to publish built assets to production
 - Follow semantic versioning for releases
 
 ## License

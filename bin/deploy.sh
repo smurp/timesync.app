@@ -22,7 +22,7 @@ function print_usage() {
     echo -e "  --force    Skip confirmation prompts"
     echo -e ""
     echo -e "What it does:"
-    echo -e "  1. Builds all assets (npm run build)"
+    echo -e "  1. Verifies built assets exist (img/, icons, favicon)"
     echo -e "  2. Switches to 'deploy' branch"
     echo -e "  3. Merges current branch"
     echo -e "  4. Commits built assets"
@@ -81,10 +81,19 @@ function deploy_to_production() {
         fi
     fi
     
-    # Build assets first
-    echo -e "${BLUE}Building assets...${NC}"
-    npm run build
-    echo -e "${GREEN}✅ Assets built${NC}"
+    # Verify required assets exist
+    echo -e "${BLUE}Checking for required assets...${NC}"
+    if [[ ! -d "img" ]] || [[ ! -f "apple-touch-icon.png" ]] || [[ ! -f "favicon.ico" ]]; then
+        echo -e "${RED}Error: Required assets not found${NC}"
+        echo -e "Missing files/directories:"
+        [[ ! -d "img" ]] && echo -e "  ❌ img/ directory"
+        [[ ! -f "apple-touch-icon.png" ]] && echo -e "  ❌ apple-touch-icon.png"
+        [[ ! -f "favicon.ico" ]] && echo -e "  ❌ favicon.ico"
+        echo -e ""
+        echo -e "${YELLOW}Run 'npm run build' first to generate required assets${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ All required assets found${NC}"
     
     # Check if deploy branch exists
     if git show-ref --verify --quiet refs/heads/deploy; then
