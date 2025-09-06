@@ -3,10 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TimeSync - Audio synchronization tool">
+    <meta name="description" content="TimeSync - Audio Visual synchronization tool for recordings and conferences">
+    <meta name="keywords" content="time sync, audio synchronization, clapper, recording, conference, timecode">
+    <meta name="author" content="TimeSync App">
     <meta name="theme-color" content="#000033">
+    <meta name="color-scheme" content="dark">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="TimeSync">
+    
+    <!-- Apple Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TimeSync">
+    <meta name="apple-touch-fullscreen" content="yes">
+    
+    <!-- Apple Icons -->
+    <link rel="apple-touch-icon" href="/img/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/img/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="/img/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="/img/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/img/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/img/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/img/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="/img/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/img/icon-512x512.png">
+    
+    <!-- Standard Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/img/icon-16x16.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    
+    <!-- Microsoft Meta Tags -->
+    <meta name="msapplication-TileImage" content="/img/icon-144x144.png">
+    <meta name="msapplication-TileColor" content="#000033">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
     <title>TimeSync</title>
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
+    
     <style>
         * {
             margin: 0;
@@ -27,6 +63,8 @@
             align-items: center;
             min-height: 100vh;
             overflow: hidden;
+            /* PWA safe areas for notched devices */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
         .container {
@@ -45,6 +83,35 @@
             max-width: 90vw;
             max-height: 90vh;
             box-sizing: border-box;
+        }
+
+        /* PWA Install Prompt */
+        .install-prompt {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 100, 255, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .install-prompt.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .install-prompt:hover {
+            background: rgba(0, 100, 255, 1);
+            transform: translateY(0) scale(1.05);
         }
 
         /* Corner SVG styles */
@@ -310,6 +377,14 @@
                 width: 60px;
                 height: 60px;
             }
+
+            .install-prompt {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                width: auto;
+            }
         }
 
         @media (max-width: 550px) {
@@ -344,9 +419,22 @@
                 font-size: 1.3rem;
             }
         }
+
+        /* PWA display mode styles */
+        @media (display-mode: standalone) {
+            body {
+                /* Adjust for standalone mode */
+                padding-top: max(env(safe-area-inset-top), 20px);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- PWA Install Prompt -->
+    <button id="installPrompt" class="install-prompt" style="display: none;">
+        📱 Install App
+    </button>
+
     <div class="container">
         <!-- Corner SVG buttons -->
         <a href="https://noosphere.org/blog/timesync/" class="corner-svg top-left" target="_blank" rel="noopener noreferrer">
@@ -499,6 +587,66 @@
         let voices = [];
         let pendingSync = null;
         let pendingSpeech = null;
+        let deferredPrompt = null;
+
+        // PWA Installation handling
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install button
+            showInstallPrompt();
+        });
+
+        function showInstallPrompt() {
+            const installPrompt = document.getElementById('installPrompt');
+            installPrompt.style.display = 'block';
+            setTimeout(() => {
+                installPrompt.classList.add('show');
+            }, 100);
+        }
+
+        function hideInstallPrompt() {
+            const installPrompt = document.getElementById('installPrompt');
+            installPrompt.classList.remove('show');
+            setTimeout(() => {
+                installPrompt.style.display = 'none';
+            }, 300);
+        }
+
+        document.getElementById('installPrompt').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`PWA install outcome: ${outcome}`);
+                // Clear the stored event
+                deferredPrompt = null;
+                // Hide the install button
+                hideInstallPrompt();
+            }
+        });
+
+        // Handle successful PWA installation
+        window.addEventListener('appinstalled', (e) => {
+            console.log('PWA was installed');
+            hideInstallPrompt();
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registration successful:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
 
         // Initialize audio context
         function initAudio() {
@@ -659,7 +807,7 @@
             });
         }
 
-        // Handle time sync - NO STATUS OVERLAY REFERENCES
+        // Handle time sync
         function handleTimeSync() {
             const button = document.getElementById('syncButton');
             
@@ -716,6 +864,15 @@
             }, msToNextSecond);
         }
 
+        // Handle URL parameters (for shortcuts)
+        function handleUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'sync') {
+                // Auto-trigger sync if opened via shortcut
+                setTimeout(handleTimeSync, 500);
+            }
+        }
+
         // Setup dialog functionality
         const helpButton = document.getElementById('helpButton');
         const helpDialog = document.getElementById('helpDialog');
@@ -751,8 +908,11 @@
         // Start clock
         updateClock();
 
+        // Handle URL parameters
+        handleUrlParams();
+
         // Load version from manifest.json
-        fetch('manifest.json')
+        fetch('/manifest.json')
             .then(response => response.json())
             .then(manifest => {
                 if (manifest.version) {
@@ -765,9 +925,11 @@
             });
 
         // Log initialization
-        console.log('TimeSync initialized', {
+        console.log('TimeSync PWA initialized', {
             audioSupport: !!(window.AudioContext || window.webkitAudioContext),
             speechSupport: !!window.speechSynthesis,
+            serviceWorkerSupport: 'serviceWorker' in navigator,
+            isStandalone: window.matchMedia('(display-mode: standalone)').matches,
             timestamp: new Date().toISOString()
         });
     </script>

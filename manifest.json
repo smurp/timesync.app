@@ -1,11 +1,96 @@
 {
-  "name": "TimeSync",
+  "name": "TimeSync - Audio Visual Synchronization Tool",
   "short_name": "TimeSync",
-  "description": "Audio Visual synchronization tool for recordings and conferences",
-  "version": "0.5.7",
-  "start_url": "https://timesync.app",
+  "description": "Audio Visual synchronization tool for recordings and conferences - a clapper for the web",
+  "version": "0.5.8",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000033",
   "theme_color": "#000033",
-  "orientation": "portrait-primary"
+  "orientation": "portrait-primary",
+  "categories": ["utilities", "productivity", "music"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/img/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/img/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Time Sync",
+      "short_name": "Sync",
+      "description": "Perform immediate time synchronization",
+      "url": "/?action=sync",
+      "icons": [
+        {
+          "src": "/img/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "TimeSync desktop interface"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "TimeSync mobile interface"
+    }
+  ],
+  "prefer_related_applications": false
 }

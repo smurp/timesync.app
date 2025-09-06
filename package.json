@@ -1,0 +1,34 @@
+{
+  "name": "timesync-app",
+  "version": "0.5.8",
+  "description": "Audio Visual synchronization tool for recordings and conferences - a clapper for the web",
+  "scripts": {
+    "render-png": "./bin/svg2png.sh timesync-icon.svg timesync-source-1024.png --size 1024x1024",
+    "generate-icons": "./bin/generate-icons.sh timesync-source-1024.png",
+    "build": "npm run render-png && npm run generate-icons",
+    "svg2png": "./bin/svg2png.sh",
+    "setup": "chmod +x bin/generate-icons.sh bin/svg2png.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smurp/timesync.app.git"
+  },
+  "keywords": [
+    "pwa",
+    "time-sync",
+    "audio-sync",
+    "clapper",
+    "recording",
+    "conference"
+  ],
+  "author": "TimeSync Contributors",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ]
+}
