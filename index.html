@@ -152,7 +152,17 @@
             right: -15px;
         }
 
-        /* TIME SYNC button at top */
+        /* Button container for side-by-side layout */
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* TIME SYNC button styling */
         .sync-button {
             padding: 1rem 2rem;
             font-size: 1.5rem;
@@ -166,7 +176,6 @@
             letter-spacing: 0.1em;
             box-shadow: 0 4px 20px rgba(255, 56, 56, 0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 20px;
         }
 
         .sync-button:hover {
@@ -175,6 +184,31 @@
         }
 
         .sync-button:active {
+            transform: translateY(0);
+        }
+
+        /* ADD TIME SYNC button styling */
+        .add-button {
+            padding: 1rem 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #87ceeb 0%, #add8e6 100%);
+            color: black;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 0 4px 20px rgba(135, 206, 235, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(135, 206, 235, 0.4);
+        }
+
+        .add-button:active {
             transform: translateY(0);
         }
 
@@ -360,7 +394,11 @@
                 padding: 15px;
             }
 
-            .sync-button {
+            .button-container {
+                gap: 10px;
+            }
+
+            .sync-button, .add-button {
                 font-size: 1.2rem;
                 padding: 0.8rem 1.5rem;
             }
@@ -393,6 +431,11 @@
                 border-width: 2px;
             }
 
+            .button-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
             .corner-svg {
                 width: 50px;
                 height: 50px;
@@ -406,9 +449,10 @@
                 bottom: -10px;
             }
 
-            .sync-button {
+            .sync-button, .add-button {
                 font-size: 1rem;
                 padding: 0.6rem 1.2rem;
+                width: 100%;
             }
 
             .date-display {
@@ -550,10 +594,18 @@
             </svg>
         </a>
 
-        <!-- TIME SYNC button at top -->
-        <button class="sync-button" id="syncButton" type="button">
-            <span style="font-style: italic; text-transform: lowercase;">say</span> TIME SYNC
-        </button>
+        <!-- Button container for side-by-side layout -->
+        <div class="button-container">
+            <!-- TIME SYNC button -->
+            <button class="sync-button" id="syncButton" type="button">
+                <span style="font-style: italic; text-transform: lowercase;">say</span> TIME SYNC
+            </button>
+            
+            <!-- ADD TIME SYNC button -->
+            <button class="add-button" id="addButton" type="button">
+                <span style="font-style: italic; text-transform: lowercase;">add</span> TIME SYNC
+            </button>
+        </div>
         
         <!-- Date display -->
         <div id="zulu-date" class="date-display">2025-01-01</div>
@@ -672,13 +724,14 @@
             const ctx = initAudio();
             const now = ctx.currentTime;
             
-            // White noise burst for sharp transient
+            // White noise burst for sharp transient - increased amplitude
             const bufferSize = ctx.sampleRate * 0.005; // 5ms
             const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
             const data = buffer.getChannelData(0);
             
             for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() - 0.5) * 2 * Math.exp(-i / bufferSize * 10);
+                // Increased amplitude from 2 to 4 for louder noise burst
+                data[i] = (Math.random() - 0.5) * 4 * Math.exp(-i / bufferSize * 10);
             }
             
             const noiseSource = ctx.createBufferSource();
@@ -689,20 +742,35 @@
             osc.frequency.value = 4000;
             osc.type = 'square';
             
-            // Sharp envelope
+            // Additional mid-frequency component for more punch
+            const osc2 = ctx.createOscillator();
+            osc2.frequency.value = 1000;
+            osc2.type = 'square';
+            
+            // Sharp envelope with higher gain
             const gainNode = ctx.createGain();
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(1, now + 0.001); // 1ms attack
+            gainNode.gain.linearRampToValueAtTime(2.5, now + 0.001); // Increased from 1 to 2.5
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.01); // 9ms decay
+            
+            // Second gain node for additional oscillator
+            const gainNode2 = ctx.createGain();
+            gainNode2.gain.setValueAtTime(0, now);
+            gainNode2.gain.linearRampToValueAtTime(1.5, now + 0.001); // Separate gain for mid-freq
+            gainNode2.gain.exponentialRampToValueAtTime(0.001, now + 0.008);
             
             noiseSource.connect(gainNode);
             osc.connect(gainNode);
+            osc2.connect(gainNode2);
             gainNode.connect(ctx.destination);
+            gainNode2.connect(ctx.destination);
             
             noiseSource.start(now);
             osc.start(now);
+            osc2.start(now);
             noiseSource.stop(now + 0.005);
             osc.stop(now + 0.01);
+            osc2.stop(now + 0.008);
         }
 
         // Copy to clipboard with visual feedback
@@ -807,6 +875,20 @@
             });
         }
 
+        // Handle immediate time sync (no delay, no sound)
+        function handleAddTimeSync() {
+            // Get the current time immediately - no waiting for top of second
+            const currentTime = new Date();
+            
+            // Add log entry immediately
+            addLog(currentTime);
+            
+            // Visual feedback for the add button
+            const button = document.getElementById('addButton');
+            button.classList.add('flash');
+            setTimeout(() => button.classList.remove('flash'), 200);
+        }
+
         // Handle time sync
         function handleTimeSync() {
             const button = document.getElementById('syncButton');
@@ -901,6 +983,7 @@
 
         // Event listeners
         document.getElementById('syncButton').addEventListener('click', handleTimeSync);
+        document.getElementById('addButton').addEventListener('click', handleAddTimeSync);
 
         // Initialize audio on first interaction
         document.body.addEventListener('click', initAudio, { once: true });
