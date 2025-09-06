@@ -1,6 +1,6 @@
 {
   "name": "timesync-app",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "Audio Visual synchronization tool for recordings and conferences - a clapper for the web",
   "scripts": {
     "render-png": "./bin/svg2png.sh timesync-icon.svg timesync-source-1024.png --size 1024x1024",
@@ -9,7 +9,7 @@
     "svg2png": "./bin/svg2png.sh",
     "setup": "chmod +x bin/generate-icons.sh bin/svg2png.sh bin/update-version.sh bin/deploy.sh",
     "release:patch": "./bin/update-version.sh patch",
-    "release:minor": "./bin/update-version.sh minor", 
+    "release:minor": "./bin/update-version.sh minor",
     "release:major": "./bin/update-version.sh major"
   },
   "repository": {
