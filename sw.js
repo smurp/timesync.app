@@ -1,5 +1,5 @@
 // TimeSync PWA Service Worker
-const CACHE_NAME = 'timesync-v0.5.10';
+const CACHE_NAME = 'timesync-v0.6.0';
 const urlsToCache = [
   '/',
   '/index.html',
