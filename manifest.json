@@ -9,7 +9,11 @@
   "background_color": "#000033",
   "theme_color": "#000033",
   "orientation": "portrait-primary",
-  "categories": ["utilities", "productivity", "music"],
+  "categories": [
+    "utilities",
+    "productivity",
+    "music"
+  ],
   "lang": "en-US",
   "dir": "ltr",
   "icons": [
