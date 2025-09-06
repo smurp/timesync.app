@@ -134,4 +134,33 @@ The script will:
 - Update package.json version
 - Update manifest.json version  
 - Update service worker cache name
-- Optionally create git commit and tag
+- Create git commit and tag
+- Optionally deploy to production
+
+## Deployment Workflow
+
+TimeSync uses a `deploy` branch for GitHub Pages to separate development from production:
+
+### Development (on `main` branch):
+```bash
+# Normal development - commits don't go live
+git add .
+git commit -m "Work in progress"
+git push origin main  # Safe - not deployed
+```
+
+### Release to Production:
+```bash
+# Option 1: Release with version bump
+npm run release:patch  # Updates version AND deploys
+
+# Option 2: Deploy current state without version bump  
+npm run deploy
+```
+
+### GitHub Pages Setup:
+1. Go to repo Settings → Pages
+2. Set source to `deploy` branch (not `main`)
+3. Now only intentional releases go live at https://timesync.app
+
+This workflow allows continuous development without every commit going to production!
