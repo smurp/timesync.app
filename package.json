@@ -1,6 +1,6 @@
 {
   "name": "timesync-app",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "Audio Visual synchronization tool for recordings and conferences - a clapper for the web",
   "scripts": {
     "render-png": "./bin/svg2png.sh timesync-icon.svg timesync-source-1024.png --size 1024x1024",
