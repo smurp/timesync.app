@@ -2,7 +2,7 @@
   "name": "TimeSync - Audio Visual Synchronization Tool",
   "short_name": "TimeSync",
   "description": "Audio Visual synchronization tool for recordings and conferences - a clapper for the web",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
