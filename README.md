@@ -110,15 +110,14 @@ npm run build         # Full build: SVG → PNG → all PWA icons
 ### **Development**
 ```bash
 npm run setup         # Make scripts executable
-npm run svg2png       # Manual SVG conversion tool
 ```
 
 ### **Deployment & Versioning**
 ```bash
-npm run deploy        # Deploy current main to production
 npm run release:patch # Patch version (0.5.7 → 0.5.8) + deploy
 npm run release:minor # Minor version (0.5.7 → 0.6.0) + deploy  
 npm run release:major # Major version (0.5.7 → 1.0.0) + deploy
+npm run deploy        # Deploy current main to production
 ```
 
 ## Setup for New Contributors
