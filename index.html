@@ -661,6 +661,7 @@
     <script>
         // Global state
         let audioContext = null;
+        let audioUnlocked = false; // Track if audio has been unlocked for iOS
         const synth = window.speechSynthesis;
         let voices = [];
         let pendingSync = null;
@@ -1012,12 +1013,42 @@
             }, 500);
         }
 
-        // Initialize audio context
+        // Initialize audio context with iOS compatibility
         function initAudio() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
+            
+            // Resume context if it's suspended (iOS requirement)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext resumed');
+                });
+            }
+            
             return audioContext;
+        }
+
+        // Unlock audio by playing a silent sound (iOS workaround)
+        function unlockAudio() {
+            if (audioUnlocked) return Promise.resolve();
+            
+            const ctx = initAudio();
+            
+            // Create a silent buffer
+            const buffer = ctx.createBuffer(1, 1, 22050);
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ctx.destination);
+            
+            // Play silent sound
+            source.start(0);
+            
+            // Mark as unlocked
+            audioUnlocked = true;
+            console.log('Audio unlocked for iOS');
+            
+            return Promise.resolve();
         }
 
         // Load voices
@@ -1034,6 +1065,12 @@
         // Create sharp tick sound
         function createSharpTick() {
             const ctx = initAudio();
+            
+            // Ensure context is running
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+            
             const now = ctx.currentTime;
             
             // White noise burst for sharp transient - increased amplitude
@@ -1201,9 +1238,18 @@
             setTimeout(() => button.classList.remove('flash'), 200);
         }
 
-        // Handle time sync
+        // Handle time sync with iOS audio fix
         function handleTimeSync() {
             const button = document.getElementById('syncButton');
+            
+            // CRITICAL: Unlock audio immediately while we still have user gesture context
+            unlockAudio();
+            
+            // Also ensure AudioContext is initialized and resumed
+            const ctx = initAudio();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
             
             // Cancel any currently playing speech and pending timeouts
             synth.cancel();
@@ -1220,19 +1266,21 @@
             const now = new Date();
             const msToNextSecond = 1000 - now.getMilliseconds();
             
-            // Wait for the top of the next second
-            pendingSync = setTimeout(() => {
+            // For iOS: If we're very close to the next second, just do it immediately
+            // This maintains the user gesture context better
+            if (msToNextSecond < 50) {
+                // Execute immediately
                 const tickTime = new Date();
                 
-                // 1. EMIT THE SHARP TICK - This is the sync point!
+                // 1. EMIT THE SHARP TICK
                 createSharpTick();
                 
                 // 2. Visual feedback
                 button.classList.add('flash');
                 setTimeout(() => button.classList.remove('flash'), 300);
                 
-                // 3. After a brief pause, speak the time announcement
-                pendingSpeech = setTimeout(() => {
+                // 3. Speak the time announcement
+                setTimeout(() => {
                     const timeText = formatTimeForSpeech(tickTime);
                     const announcement = `Time Sync, at the Tick, was ${timeText}`;
                     
@@ -1242,20 +1290,47 @@
                     utterance.volume = 1.0;
                     
                     synth.speak(utterance);
-                    
-                    // Log the sync event
                     addLog(tickTime);
-                    
-                    // Also log the spoken announcement for debugging
                     console.log('Announcement spoken:', announcement);
+                }, 200);
+            } else {
+                // Wait for the top of the next second
+                pendingSync = setTimeout(() => {
+                    const tickTime = new Date();
                     
-                    // Clear the speech timeout reference after it's executed
-                    pendingSpeech = null;
-                }, 200); // Small delay to separate TICK from announcement
-                
-                // Clear the sync timeout reference after it's executed
-                pendingSync = null;
-            }, msToNextSecond);
+                    // 1. EMIT THE SHARP TICK - This is the sync point!
+                    createSharpTick();
+                    
+                    // 2. Visual feedback
+                    button.classList.add('flash');
+                    setTimeout(() => button.classList.remove('flash'), 300);
+                    
+                    // 3. After a brief pause, speak the time announcement
+                    pendingSpeech = setTimeout(() => {
+                        const timeText = formatTimeForSpeech(tickTime);
+                        const announcement = `Time Sync, at the Tick, was ${timeText}`;
+                        
+                        const utterance = new SpeechSynthesisUtterance(announcement);
+                        utterance.rate = 1.0;
+                        utterance.pitch = 1.0;
+                        utterance.volume = 1.0;
+                        
+                        synth.speak(utterance);
+                        
+                        // Log the sync event
+                        addLog(tickTime);
+                        
+                        // Also log the spoken announcement for debugging
+                        console.log('Announcement spoken:', announcement);
+                        
+                        // Clear the speech timeout reference after it's executed
+                        pendingSpeech = null;
+                    }, 200); // Small delay to separate TICK from announcement
+                    
+                    // Clear the sync timeout reference after it's executed
+                    pendingSync = null;
+                }, msToNextSecond);
+            }
         }
 
         // Handle URL parameters (for shortcuts)
@@ -1297,8 +1372,14 @@
         document.getElementById('syncButton').addEventListener('click', handleTimeSync);
         document.getElementById('addButton').addEventListener('click', handleAddTimeSync);
 
-        // Initialize audio on first interaction
-        document.body.addEventListener('click', initAudio, { once: true });
+        // Initialize audio on first interaction with ANY element
+        // This helps ensure audio is ready when needed on iOS
+        ['click', 'touchstart'].forEach(eventType => {
+            document.body.addEventListener(eventType, () => {
+                initAudio();
+                unlockAudio();
+            }, { once: true });
+        });
 
         // Start clock
         updateClock();
