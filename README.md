@@ -70,8 +70,8 @@ git push origin main  # ✅ Not deployed
 
 ### **Release to Production**
 ```bash
-# Option 1: Version bump + deploy
-npm run release:patch  # 0.5.8 → 0.5.9, builds & deploys
+# Option 1: Version bump
+npm run release:patch  # 0.5.8 → 0.5.9, updates the version number
 
 # Option 2: Deploy current state without version change
 npm run deploy
