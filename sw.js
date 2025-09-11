@@ -1,5 +1,5 @@
 // TimeSync PWA Service Worker with Smart Update Strategy
-const CACHE_VERSION = '0.6.4';
+const CACHE_VERSION = '0.6.5';
 const CACHE_NAME = `timesync-v${CACHE_VERSION}`;
 
 const urlsToCache = [
